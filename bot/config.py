@@ -8,7 +8,7 @@ WEBHOOK_PATH = "/webhook"
 WEBHOOK_SECRET = "cambia_esto_123"
 PORT = 10000
 DATABASE_URL = ""
-ADMIN_ID = 0
+ADMIN_ID = 8282703640
 
 CATEGORIES = {
     "tech":    "💻 Tecnología",
