@@ -3,11 +3,11 @@
 # ============================================
 
 BOT_TOKEN = "8979504390:AAHTLwyDC9LCDFGPEiQcI-GJBQRTiK7tWsw"
-WEBHOOK_URL = "https://TU-APP.onrender.com"
+WEBHOOK_URL = "https://telegram-groups-bot.onrender.com"
 WEBHOOK_PATH = "/webhook"
 WEBHOOK_SECRET = "cambia_esto_123"
 PORT = 10000
-DATABASE_URL = "postgresql://usuario:password@host:5432/dbname"
+DATABASE_URL = ""
 ADMIN_ID = 0
 
 CATEGORIES = {
