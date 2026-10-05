@@ -7,10 +7,15 @@ from bot.keyboards import all_groups_order_kb, all_groups_results_kb, main_menu
 
 router = Router()
 PER_PAGE = 20
+SEP = "━━━━━━━━━━━━━━━━━━━━"
 
 
 def _type_label(t):
-    return {"group": "👥 Grupos", "channel": "📢 Canales", "all": "📚 Todos"}.get(t, "📚 Todos")
+    return {
+        "group":   "👥 GRUPOS DE TELEGRAM",
+        "channel": "📢 CANALES DE TELEGRAM",
+        "all":     "📚 TODOS",
+    }.get(t, "📚 TODOS")
 
 
 def _icon_for(g):
@@ -18,6 +23,44 @@ def _icon_for(g):
     if tipo == "channel":
         return "🔞📢" if g["is_adult"] else "📢"
     return "🔞" if g["is_adult"] else "📌"
+
+
+def _type_short(tipo):
+    return "📢" if tipo == "channel" else "📌"
+
+
+def _format_item(g):
+    """Formato visual de un grupo/canal."""
+    tipo = g["type"] if "type" in g.keys() else "group"
+    icon = _icon_for(g)
+    flag = ""
+    if g["country"]:
+        label = config.COUNTRIES.get(g["country"], "")
+        flag = label.split()[0] if label else ""
+    cat_icon = ""
+    if g["category"]:
+        cat_icon = config.CATEGORIES.get(g["category"], "").split()[0]
+
+    members_txt = ""
+    if g["members_range"]:
+        members_txt = config.MEMBERS_RANGES.get(g["members_range"], "")
+
+    # Primera línea con título
+    line = f"{icon} <a href='{g['link']}'><b>{g['title']}</b></a> {flag}\n"
+
+    # Segunda línea con detalles
+    details = []
+    if cat_icon:
+        details.append(cat_icon)
+    if members_txt:
+        details.append(f"👥 {members_txt}")
+    if g["views"]:
+        details.append(f"👁️ {g['views']}")
+
+    if details:
+        line += f"   <i>{'  ·  '.join(details)}</i>\n"
+
+    return line
 
 
 async def _build_filters(user_id):
@@ -32,27 +75,55 @@ async def _build_filters(user_id):
 async def _show_list(call, state, group_type, order, page=0):
     filters = await _build_filters(call.from_user.id)
     total = await db.count_by_type(group_type, filters)
+
     if total == 0:
-        await call.message.edit_text(f"📭 No hay {_type_label(group_type).lower()} todavía.",
-                                      reply_markup=main_menu())
+        await call.message.edit_text(
+            f"📭 <b>No hay {_type_label(group_type).lower()}</b>\n\n"
+            "Vuelve más tarde o añade tú el primero con ➕",
+            reply_markup=main_menu(),
+            parse_mode="HTML"
+        )
         await call.answer()
         return
+
     groups = await db.list_by_type(group_type, order, filters, page=page, per_page=PER_PAGE)
     total_pages = max(1, (total + PER_PAGE - 1) // PER_PAGE)
-    order_label = {"asc": "A-Z", "desc": "Z-A", "members": "Más miembros",
-                   "recent": "Recientes", "views": "Más vistos"}.get(order, "A-Z")
-    text = f"{_type_label(group_type)} — Orden: {order_label}\nTotal: <b>{total}</b>\n\n"
+
+    order_label = {
+        "asc": "A-Z", "desc": "Z-A",
+        "members": "Más miembros",
+        "recent": "Recientes",
+        "views": "Más vistos",
+    }.get(order, "A-Z")
+
+    # Cabecera
+    header = (
+        f"╔════════════════════════╗\n"
+        f"   {_type_label(group_type)}\n"
+        f"╚════════════════════════╝\n\n"
+        f"🔤 <b>Orden:</b> {order_label}\n"
+        f"📊 <b>Total:</b> {total}  ·  📄 <b>Pág:</b> {page+1}/{total_pages}\n\n"
+        f"{SEP}\n\n"
+    )
+
+    # Lista
+    body = ""
     for g in groups:
-        icon = _icon_for(g)
-        flag = ""
-        if g["country"]:
-            label = config.COUNTRIES.get(g["country"], "")
-            flag = label.split()[0] if label else ""
-        text += f"{icon} <a href='{g['link']}'>{g['title']}</a> {flag}\n"
-    await state.update_data(all_type=group_type, all_order=order,
-                            all_page=page, all_total_pages=total_pages)
-    await call.message.edit_text(text, reply_markup=all_groups_results_kb(groups, page, total_pages),
-                                  disable_web_page_preview=True)
+        body += _format_item(g) + "\n"
+
+    text = header + body.rstrip() + f"\n\n{SEP}"
+
+    await state.update_data(
+        all_type=group_type, all_order=order,
+        all_page=page, all_total_pages=total_pages
+    )
+
+    await call.message.edit_text(
+        text,
+        reply_markup=all_groups_results_kb(groups, page, total_pages),
+        disable_web_page_preview=True,
+        parse_mode="HTML"
+    )
     await call.answer()
 
 
@@ -60,8 +131,16 @@ async def _show_list(call, state, group_type, order, page=0):
 async def cb_menu_all_type(call: CallbackQuery, state: FSMContext):
     group_type = call.data.split(":")[2]
     await state.update_data(all_type=group_type)
-    await call.message.edit_text(f"{_type_label(group_type)}\n\n¿Cómo quieres ordenarlos?",
-                                  reply_markup=all_groups_order_kb())
+
+    text = (
+        f"{_type_label(group_type)}\n\n"
+        f"¿Cómo quieres ordenarlos?"
+    )
+    await call.message.edit_text(
+        text,
+        reply_markup=all_groups_order_kb(),
+        parse_mode="HTML"
+    )
     await call.answer()
 
 
@@ -84,6 +163,6 @@ async def cb_page(call: CallbackQuery, state: FSMContext):
 async def cb_change_order(call: CallbackQuery, state: FSMContext):
     data = await state.get_data()
     group_type = data.get("all_type", "all")
-    await call.message.edit_text(f"{_type_label(group_type)}\n\n¿Cómo quieres ordenarlos?",
-                                  reply_markup=all_groups_order_kb())
+    text = f"{_type_label(group_type)}\n\n¿Cómo quieres ordenarlos?"
+    await call.message.edit_text(text, reply_markup=all_groups_order_kb(), parse_mode="HTML")
     await call.answer()
