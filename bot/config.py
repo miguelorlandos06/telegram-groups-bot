@@ -2,7 +2,7 @@
 # CONFIGURACIÓN - EDITA AQUÍ
 # ============================================
 
-BOT_TOKEN = "8979504390:AAHTLwyDC9LCDFGPEiQcI-GJBQRTiK7tWsw"
+BOT_TOKEN = "8912840164:AAEVvJoAjZxIEKEpINO9V-LQPB0OuoDhFXs"
 WEBHOOK_URL = "https://telegram-groups-repo.onrender.com"
 WEBHOOK_PATH = "/webhook"
 WEBHOOK_SECRET = "cambia_esto_123"
