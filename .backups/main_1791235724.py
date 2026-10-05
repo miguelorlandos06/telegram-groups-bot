@@ -12,12 +12,6 @@ logging.basicConfig(level=logging.INFO)
 
 WEBAPP_DIR = os.path.join(os.path.dirname(__file__), "webapp")
 
-_bot_instance: Bot = None
-
-
-def get_bot() -> Bot:
-    return _bot_instance
-
 
 async def serve_index(request):
     return web.FileResponse(os.path.join(WEBAPP_DIR, "index.html"))
@@ -40,10 +34,7 @@ async def on_shutdown(bot: Bot):
 
 
 def main():
-    global _bot_instance
     bot = Bot(config.BOT_TOKEN)
-    _bot_instance = bot
-
     dp = Dispatcher()
     dp.include_router(setup_routers())
     dp.startup.register(on_startup)
@@ -51,15 +42,19 @@ def main():
 
     app = web.Application()
 
+    # 1. Webhook del bot
     handler = SimpleRequestHandler(dispatcher=dp, bot=bot, secret_token=config.WEBHOOK_SECRET)
     handler.register(app, path=config.WEBHOOK_PATH)
 
+    # 2. API JSON para la Mini App
     setup_api(app)
 
+    # 3. Mini App (HTML/CSS/JS)
     app.router.add_get("/app", serve_index)
     app.router.add_get("/app/", serve_index)
     app.router.add_static("/app/", path=WEBAPP_DIR, name="webapp")
 
+    # 4. Aplicación aiogram
     setup_application(app, dp, bot=bot)
 
     web.run_app(app, host="0.0.0.0", port=config.PORT)

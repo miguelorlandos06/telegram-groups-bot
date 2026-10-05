@@ -19,6 +19,7 @@ def _icon_for(g):
 
 
 def _format_item(g):
+    tipo = g["type"] if "type" in g.keys() else "group"
     icon = _icon_for(g)
     flag = ""
     if g["country"]:
@@ -30,6 +31,7 @@ def _format_item(g):
     members_txt = ""
     if g["members_range"]:
         members_txt = config.MEMBERS_RANGES.get(g["members_range"], "")
+
     line = f"{icon} <a href='{g['link']}'><b>{g['title']}</b></a> {flag}\n"
     details = []
     if cat_icon:
@@ -41,9 +43,7 @@ def _format_item(g):
     return line
 
 
-async def _build_filters(user_id, base):
-    user = await db.get_user(user_id)
-    show_adult = bool(user and user["show_nsfw"])
+def _build_filters_sync(base, show_adult):
     f = dict(base or {})
     if not show_adult:
         f["is_adult"] = False
@@ -52,6 +52,12 @@ async def _build_filters(user_id, base):
         min_members = config.MEMBERS_VALUES.get(f["members_range"])
     f["min_members"] = min_members
     return f
+
+
+async def _build_filters(user_id, base):
+    user = await db.get_user(user_id)
+    show_adult = bool(user and user["show_nsfw"])
+    return _build_filters_sync(base, show_adult)
 
 
 def _build_header(query, total, page, total_pages):
@@ -72,13 +78,21 @@ async def cmd_search(message: Message, state: FSMContext):
         await _run_search(message, parts[1], state, message.from_user.id)
     else:
         await state.set_state(SearchStates.waiting_query)
-        await message.answer("🔍 <b>¿Qué quieres buscar?</b>", parse_mode="HTML")
+        await message.answer(
+            "🔍 <b>¿Qué quieres buscar?</b>\n\n"
+            "Escribe el nombre, categoría o etiqueta.",
+            parse_mode="HTML"
+        )
 
 
 @router.callback_query(F.data == "menu:search")
 async def cb_search(call: CallbackQuery, state: FSMContext):
     await state.set_state(SearchStates.waiting_query)
-    await call.message.edit_text("🔍 <b>¿Qué quieres buscar?</b>", parse_mode="HTML")
+    await call.message.edit_text(
+        "🔍 <b>¿Qué quieres buscar?</b>\n\n"
+        "Escribe el nombre, categoría o etiqueta.",
+        parse_mode="HTML"
+    )
     await call.answer()
 
 
@@ -92,21 +106,30 @@ async def _run_search(message, query, state, user_id):
     filters = await _build_filters(user_id, data.get("filters", {}))
     total = await db.count_groups(query=query, filters=filters)
     if total == 0:
-        await message.answer(f"😕 <b>Sin resultados para:</b> <code>{query}</code>",
-                              parse_mode="HTML")
+        await message.answer(
+            f"😕 <b>Sin resultados para:</b> <code>{query}</code>\n\n"
+            "Prueba con otra palabra o revisa los filtros.",
+            parse_mode="HTML"
+        )
         return
     groups = await db.search_groups(query, filters, page=0)
     total_pages = max(1, (total + 9) // 10)
+
     text = _build_header(query, total, 0, total_pages)
     for g in groups:
         text += _format_item(g) + "\n"
     text = text.rstrip() + f"\n\n{SEP}"
+
     await state.update_data(
         last_query=query, last_filters=filters,
         last_page=0, last_total_pages=total_pages
     )
-    await message.answer(text, reply_markup=search_results_kb(groups, 0, total_pages),
-                          disable_web_page_preview=True, parse_mode="HTML")
+    await message.answer(
+        text,
+        reply_markup=search_results_kb(groups, 0, total_pages),
+        disable_web_page_preview=True,
+        parse_mode="HTML"
+    )
 
 
 async def show_browse(call, category, page=0):
@@ -119,12 +142,16 @@ async def show_browse(call, category, page=0):
         filters["is_adult"] = True
     total = await db.count_groups(filters=filters, category=category)
     if total == 0:
-        await call.message.edit_text("😕 <b>No hay publicaciones en esta categoría</b>",
-                                      reply_markup=main_menu(), parse_mode="HTML")
+        await call.message.edit_text(
+            "😕 <b>No hay publicaciones en esta categoría</b>",
+            reply_markup=main_menu(),
+            parse_mode="HTML"
+        )
         await call.answer()
         return
     groups = await db.browse_category(category, filters, page=page)
     total_pages = max(1, (total + 9) // 10)
+
     cat_label = config.CATEGORIES.get(category, category)
     header = (
         f"╔════════════════════════╗\n"
@@ -137,8 +164,13 @@ async def show_browse(call, category, page=0):
     for g in groups:
         text += _format_item(g) + "\n"
     text = text.rstrip() + f"\n\n{SEP}"
-    await call.message.edit_text(text, reply_markup=search_results_kb(groups, page, total_pages),
-                                  disable_web_page_preview=True, parse_mode="HTML")
+
+    await call.message.edit_text(
+        text,
+        reply_markup=search_results_kb(groups, page, total_pages),
+        disable_web_page_preview=True,
+        parse_mode="HTML"
+    )
     await call.answer()
 
 
@@ -153,13 +185,19 @@ async def cb_page(call: CallbackQuery, state: FSMContext):
     filters = data.get("last_filters", {})
     groups = await db.search_groups(query, filters, page=page)
     total_pages = data.get("last_total_pages", 1)
+
     text = _build_header(query, "—", page, total_pages)
     for g in groups:
         text += _format_item(g) + "\n"
     text = text.rstrip() + f"\n\n{SEP}"
+
     await state.update_data(last_page=page)
-    await call.message.edit_text(text, reply_markup=search_results_kb(groups, page, total_pages),
-                                  disable_web_page_preview=True, parse_mode="HTML")
+    await call.message.edit_text(
+        text,
+        reply_markup=search_results_kb(groups, page, total_pages),
+        disable_web_page_preview=True,
+        parse_mode="HTML"
+    )
     await call.answer()
 
 
@@ -171,7 +209,9 @@ async def cb_noop(call: CallbackQuery):
 @router.callback_query(F.data == "filters:open")
 async def cb_filters_open(call: CallbackQuery, state: FSMContext):
     data = await state.get_data()
-    await call.message.edit_reply_markup(reply_markup=filters_kb(data.get("last_filters", {})))
+    await call.message.edit_reply_markup(
+        reply_markup=filters_kb(data.get("last_filters", {}))
+    )
     await call.answer()
 
 
@@ -180,7 +220,8 @@ async def cb_filter_back(call: CallbackQuery, state: FSMContext):
     data = await state.get_data()
     query = data.get("last_query")
     if not query:
-        await call.message.edit_text("🏠 <b>Menú principal</b>", reply_markup=main_menu(), parse_mode="HTML")
+        await call.message.edit_text("🏠 <b>Menú principal</b>",
+                                      reply_markup=main_menu(), parse_mode="HTML")
         await call.answer()
         return
     page = data.get("last_page", 0)
@@ -191,8 +232,12 @@ async def cb_filter_back(call: CallbackQuery, state: FSMContext):
     for g in groups:
         text += _format_item(g) + "\n"
     text = text.rstrip() + f"\n\n{SEP}"
-    await call.message.edit_text(text, reply_markup=search_results_kb(groups, page, total_pages),
-                                  disable_web_page_preview=True, parse_mode="HTML")
+    await call.message.edit_text(
+        text,
+        reply_markup=search_results_kb(groups, page, total_pages),
+        disable_web_page_preview=True,
+        parse_mode="HTML"
+    )
     await call.answer()
 
 
@@ -225,8 +270,12 @@ async def cb_filter_apply(call: CallbackQuery, state: FSMContext):
         text += _format_item(g) + "\n"
     text = text.rstrip() + f"\n\n{SEP}"
     await state.update_data(last_filters=f, last_page=0, last_total_pages=total_pages)
-    await call.message.edit_text(text, reply_markup=search_results_kb(groups, 0, total_pages),
-                                  disable_web_page_preview=True, parse_mode="HTML")
+    await call.message.edit_text(
+        text,
+        reply_markup=search_results_kb(groups, 0, total_pages),
+        disable_web_page_preview=True,
+        parse_mode="HTML"
+    )
     await call.answer()
 
 

@@ -17,10 +17,6 @@ def main_menu():
             text="🌐 Abrir App",
             web_app=WebAppInfo(url=f"{config.WEBHOOK_URL}/app")
         )],
-        [InlineKeyboardButton(
-            text="📱 Mis publicaciones (App)",
-            web_app=WebAppInfo(url=f"{config.WEBHOOK_URL}/app?mode=mine")
-        )],
         [InlineKeyboardButton(text="👥 Grupos", callback_data="menu:all:group"),
          InlineKeyboardButton(text="📢 Canales", callback_data="menu:all:channel")],
         [InlineKeyboardButton(text="📚 Todos", callback_data="menu:all:all")],
@@ -201,23 +197,3 @@ def trending_kb(groups):
         ))
     b.row(InlineKeyboardButton(text="🏠 Menú", callback_data="menu:main"))
     return b.as_markup()
-
-
-def my_publications_kb(groups):
-    b = InlineKeyboardBuilder()
-    for g in groups:
-        icon = _icon_for(g)
-        short = g['title'][:30]
-        b.row(InlineKeyboardButton(
-            text=f"🗑️ {icon} {short}",
-            callback_data=f"del:{g['id']}"
-        ))
-    b.row(InlineKeyboardButton(text="🏠 Menú", callback_data="menu:main"))
-    return b.as_markup()
-
-
-def confirm_delete_kb(group_id):
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🗑️ Sí, eliminar", callback_data=f"del_yes:{group_id}")],
-        [InlineKeyboardButton(text="❌ Cancelar", callback_data=f"del_no:{group_id}")],
-    ])

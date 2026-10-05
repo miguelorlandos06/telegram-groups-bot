@@ -1,13 +1,17 @@
 // ============================================
-// DIRECTORIO - MINI APP
+// DIRECTORIO - MINI APP MINIMALISTA
 // ============================================
 
 const tg = window.Telegram?.WebApp;
 const haptic = tg?.HapticFeedback;
-if (tg) { tg.ready(); tg.expand(); tg.disableVerticalSwipes?.(); }
 
-const MINE_MODE = new URLSearchParams(location.search).get('mode') === 'mine';
+if (tg) {
+  tg.ready();
+  tg.expand();
+  tg.disableVerticalSwipes?.();
+}
 
+// ---------- ESTADO ----------
 const state = {
   q: '', type: '', country: '', category: '',
   adult: false, page: 0, per_page: 10, total: 0,
@@ -18,22 +22,28 @@ const state = {
 let meta = null;
 let searchTimeout = null;
 
+// ---------- ICONOS SVG (trazo fino) ----------
 const ICON = {
   group: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
   channel: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>',
   lock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
   globe: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
   users: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>',
+  folder: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>',
   arrow: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>',
-  trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>',
 };
 
+// ---------- HELPERS ----------
 function escapeHtml(s) {
   const d = document.createElement('div');
   d.textContent = s || '';
   return d.innerHTML;
 }
-function vibrate(style = 'light') { try { haptic?.impactOccurred(style); } catch (e) {} }
+
+function vibrate(style = 'light') {
+  try { haptic?.impactOccurred(style); } catch (e) {}
+}
+
 function toast(msg, ms = 1600) {
   const el = document.getElementById('toast');
   el.textContent = msg;
@@ -41,13 +51,14 @@ function toast(msg, ms = 1600) {
   clearTimeout(el._t);
   el._t = setTimeout(() => el.classList.add('hidden'), ms);
 }
-function getInitData() { return window.Telegram?.WebApp?.initData || ''; }
 
+// ---------- TEMA ----------
 function setupTheme() {
   const saved = localStorage.getItem('theme');
   const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
   const theme = saved || (prefersDark ? 'dark' : 'light');
   applyTheme(theme);
+
   document.getElementById('themeToggle').addEventListener('click', () => {
     vibrate('light');
     const curr = document.documentElement.getAttribute('data-theme') || 'light';
@@ -71,9 +82,11 @@ function applyTheme(theme) {
   }
 }
 
+// ---------- SEARCH ----------
 function setupSearch() {
   const input = document.getElementById('searchInput');
   const clear = document.getElementById('searchClear');
+
   input.addEventListener('input', (e) => {
     clear.classList.toggle('hidden', !e.target.value);
     clearTimeout(searchTimeout);
@@ -82,6 +95,7 @@ function setupSearch() {
       resetAndLoad();
     }, 280);
   });
+
   clear.addEventListener('click', () => {
     vibrate('light');
     input.value = '';
@@ -91,6 +105,7 @@ function setupSearch() {
   });
 }
 
+// ---------- TABS / FILTROS ----------
 function setupTabs() {
   document.querySelectorAll('.tab').forEach(tab => {
     tab.addEventListener('click', () => {
@@ -111,7 +126,9 @@ function openSheet(filter) {
   const sheet = document.getElementById('sheet');
   const title = document.getElementById('sheetTitle');
   const body = document.getElementById('sheetBody');
+
   let opts = {}, current = '';
+
   if (filter === 'type') {
     opts = { '': 'Todos', 'group': 'Grupos', 'channel': 'Canales' };
     current = state.type;
@@ -122,7 +139,9 @@ function openSheet(filter) {
     opts = { '': 'Todas', ...meta.categories };
     current = state.category;
   }
+
   title.textContent = { type: 'Tipo', country: 'País', category: 'Categoría' }[filter] || 'Filtrar';
+
   body.innerHTML = '';
   Object.entries(opts).forEach(([key, label]) => {
     const btn = document.createElement('button');
@@ -138,6 +157,7 @@ function openSheet(filter) {
     });
     body.appendChild(btn);
   });
+
   sheet.classList.remove('hidden');
 }
 
@@ -154,13 +174,16 @@ function updateTab(filter, key, label) {
   }
 }
 
-function closeSheet() { document.getElementById('sheet').classList.add('hidden'); }
+function closeSheet() {
+  document.getElementById('sheet').classList.add('hidden');
+}
 
 function setupSheet() {
   document.getElementById('sheetBackdrop').addEventListener('click', closeSheet);
   document.getElementById('sheetClose').addEventListener('click', closeSheet);
 }
 
+// ---------- CARGA ----------
 function resetAndLoad() {
   state.page = 0;
   state.hasMore = true;
@@ -172,11 +195,13 @@ function resetAndLoad() {
 async function loadGroups(reset = false) {
   if (state.loading) return;
   state.loading = true;
+
   const list = document.getElementById('list');
   const skeleton = document.getElementById('skeleton');
   const empty = document.getElementById('empty');
   const spinner = document.getElementById('spinner');
   const status = document.getElementById('status');
+
   if (reset) {
     skeleton.classList.remove('hidden');
     empty.classList.add('hidden');
@@ -184,28 +209,39 @@ async function loadGroups(reset = false) {
   } else {
     spinner.classList.remove('hidden');
   }
+
   const params = new URLSearchParams({
-    q: state.q, type: state.type, country: state.country,
-    category: state.category, show_adult: state.adult ? '1' : '0',
+    q: state.q,
+    type: state.type,
+    country: state.country,
+    category: state.category,
+    show_adult: state.adult ? '1' : '0',
     page: state.page.toString(),
   });
+
   try {
     const res = await fetch(`/api/groups?${params}`);
     const data = await res.json();
+
     skeleton.classList.add('hidden');
     spinner.classList.add('hidden');
+
     state.total = data.total;
+
     if (data.items.length === 0 && state.page === 0) {
       empty.classList.remove('hidden');
       status.textContent = '';
       return;
     }
+
     status.textContent = `${data.total} ${data.total === 1 ? 'resultado' : 'resultados'}`;
+
     data.items.forEach((item, idx) => {
       if (state.seenIds.has(item.id)) return;
       state.seenIds.add(item.id);
       list.appendChild(renderCard(item, idx));
     });
+
     state.hasMore = data.items.length === state.per_page;
   } catch (e) {
     console.error(e);
@@ -217,36 +253,11 @@ async function loadGroups(reset = false) {
   }
 }
 
-async function deleteMyGroup(groupId, title) {
-  if (!confirm(`¿Eliminar "${title}"?\n\nEsta acción no se puede deshacer.`)) return;
-  try {
-    const res = await fetch(`/api/groups/${groupId}`, {
-      method: 'DELETE',
-      headers: { 'X-Init-Data': getInitData() },
-    });
-    const data = await res.json();
-    if (data.ok) {
-      toast('Eliminado');
-      const el = document.querySelector(`[data-group-id="${groupId}"]`);
-      if (el) {
-        el.style.transition = 'opacity 0.2s';
-        el.style.opacity = '0';
-        setTimeout(() => el.remove(), 200);
-      }
-    } else {
-      toast('Error: ' + (data.error || 'desconocido'));
-    }
-  } catch (e) {
-    console.error(e);
-    toast('Error de conexión');
-  }
-}
-
+// ---------- RENDER ----------
 function renderCard(g, idx) {
   const el = document.createElement('article');
   const isChannel = g.type === 'channel';
   el.className = 'card' + (g.is_adult ? ' card--adult' : '');
-  el.dataset.groupId = g.id;
   el.style.animationDelay = `${Math.min(idx * 20, 200)}ms`;
 
   const iconSvg = g.is_adult ? ICON.lock : (isChannel ? ICON.channel : ICON.group);
@@ -258,18 +269,8 @@ function renderCard(g, idx) {
   if (g.members_label) meta.push(`<span class="card__meta-item">${ICON.users} ${escapeHtml(g.members_label)}</span>`);
   if (g.is_adult) meta.push(`<span class="card__meta-item card__meta-item--adult">+18</span>`);
 
-  const photo = g.photo_url
-    ? `<img class="card__avatar" src="${escapeHtml(g.photo_url)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
-    : '';
-  const fallbackStyle = g.photo_url ? 'display:none' : '';
-
-  const deleteBtn = MINE_MODE
-    ? `<button class="card__action card__action--delete" data-del="${g.id}" data-title="${escapeHtml(g.title)}" aria-label="Eliminar">${ICON.trash}</button>`
-    : '';
-
   el.innerHTML = `
-    ${photo}
-    <div class="card__icon" style="${fallbackStyle}">${iconSvg}</div>
+    <div class="card__icon">${iconSvg}</div>
     <div class="card__body">
       <a class="card__title" href="${escapeHtml(g.link)}" target="_blank" rel="noopener">${escapeHtml(g.title)}</a>
       <div class="card__meta">${meta.join('')}</div>
@@ -278,50 +279,14 @@ function renderCard(g, idx) {
     <a class="card__action" href="${escapeHtml(g.link)}" target="_blank" rel="noopener" aria-label="Abrir">
       ${ICON.arrow}
     </a>
-    ${deleteBtn}
   `;
-
-  if (MINE_MODE) {
-    const btn = el.querySelector('[data-del]');
-    if (btn) btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      deleteMyGroup(parseInt(btn.dataset.del), btn.dataset.title);
-    });
-  }
 
   return el;
 }
 
-async function loadMyGroups() {
-  const list = document.getElementById('list');
-  const skeleton = document.getElementById('skeleton');
-  const empty = document.getElementById('empty');
-  const status = document.getElementById('status');
-  skeleton.classList.remove('hidden');
-  list.innerHTML = '';
-  try {
-    const res = await fetch('/api/my-groups', {
-      headers: { 'X-Init-Data': getInitData() },
-    });
-    const data = await res.json();
-    skeleton.classList.add('hidden');
-    if (!data.items || data.items.length === 0) {
-      empty.classList.remove('hidden');
-      status.textContent = '';
-      return;
-    }
-    status.textContent = `${data.total} ${data.total === 1 ? 'publicación' : 'publicaciones'}`;
-    data.items.forEach((item, idx) => list.appendChild(renderCard(item, idx)));
-  } catch (e) {
-    console.error(e);
-    skeleton.classList.add('hidden');
-    toast('Error al cargar');
-  }
-}
-
+// ---------- INFINITE SCROLL ----------
 function setupInfiniteScroll() {
   const sentinel = document.getElementById('sentinel');
-  if (!sentinel) return;
   const io = new IntersectionObserver((entries) => {
     if (entries[0].isIntersecting && state.hasMore && !state.loading) {
       state.page++;
@@ -331,6 +296,7 @@ function setupInfiniteScroll() {
   io.observe(sentinel);
 }
 
+// ---------- INIT ----------
 async function init() {
   try {
     const res = await fetch('/api/meta');
@@ -338,6 +304,7 @@ async function init() {
   } catch (e) {
     console.error('Meta error', e);
   }
+
   setupTheme();
   setupSearch();
   setupTabs();
@@ -346,12 +313,4 @@ async function init() {
   loadGroups(true);
 }
 
-if (MINE_MODE) {
-  document.querySelectorAll('.tab').forEach(t => t.style.display = 'none');
-  document.getElementById('searchInput').parentElement.style.display = 'none';
-  document.querySelector('.header__title').textContent = 'Mis publicaciones';
-  setupTheme();
-  loadMyGroups();
-} else {
-  init();
-}
+init();

@@ -44,7 +44,6 @@ async def _create_tables():
                 owner_id BIGINT,
                 views INTEGER DEFAULT 0,
                 type TEXT DEFAULT 'group',
-                photo_url TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
 
@@ -58,8 +57,9 @@ async def _create_tables():
 
 async def _migrate():
     async with pool.acquire() as conn:
-        await conn.execute("ALTER TABLE groups ADD COLUMN IF NOT EXISTS type TEXT DEFAULT 'group'")
-        await conn.execute("ALTER TABLE groups ADD COLUMN IF NOT EXISTS photo_url TEXT")
+        await conn.execute("""
+            ALTER TABLE groups ADD COLUMN IF NOT EXISTS type TEXT DEFAULT 'group'
+        """)
         await conn.execute("CREATE INDEX IF NOT EXISTS idx_type ON groups(type)")
 
 
@@ -91,51 +91,29 @@ async def group_exists(link):
         return row is not None
 
 
-async def get_group_by_id(group_id):
-    async with pool.acquire() as conn:
-        return await conn.fetchrow("SELECT * FROM groups WHERE id=$1", group_id)
-
-
 async def add_group(data):
     async with pool.acquire() as conn:
         row = await conn.fetchrow("""
             INSERT INTO groups
                 (link, title, description, category, country, language,
-                 members_range, members_estimate, is_adult, tags, owner_id,
-                 type, photo_url)
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+                 members_range, members_estimate, is_adult, tags, owner_id, type)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
             RETURNING id
         """,
             data["link"], data["title"], data["description"],
             data["category"], data["country"], data["language"],
             data["members_range"], data["members_estimate"],
             data["is_adult"], data["tags"], data["owner_id"],
-            data.get("type", "group"), data.get("photo_url")
+            data.get("type", "group")
         )
         return row["id"]
-
-
-async def delete_group(group_id, owner_id):
-    async with pool.acquire() as conn:
-        row = await conn.fetchrow("""
-            DELETE FROM groups
-            WHERE id = $1 AND owner_id = $2
-            RETURNING id
-        """, group_id, owner_id)
-        return row is not None
 
 
 async def my_groups(user_id):
     async with pool.acquire() as conn:
         return await conn.fetch(
-            "SELECT * FROM groups WHERE owner_id=$1 ORDER BY created_at DESC",
-            user_id
+            "SELECT * FROM groups WHERE owner_id=$1 ORDER BY created_at DESC", user_id
         )
-
-
-async def increment_views(group_id):
-    async with pool.acquire() as conn:
-        await conn.execute("UPDATE groups SET views = views + 1 WHERE id=$1", group_id)
 
 
 async def search_groups(query, filters, page=0):
@@ -270,16 +248,3 @@ async def get_top_groups(limit=10, filters=None):
             ORDER BY views DESC, members_estimate DESC
             LIMIT $3
         """, filters.get("is_adult"), filters.get("type"), limit)
-
-
-async def get_stats():
-    async with pool.acquire() as conn:
-        total = await conn.fetchval("SELECT COUNT(*) FROM groups")
-        groups = await conn.fetchval("SELECT COUNT(*) FROM groups WHERE type='group'")
-        channels = await conn.fetchval("SELECT COUNT(*) FROM groups WHERE type='channel'")
-        users = await conn.fetchval("SELECT COUNT(*) FROM users")
-        views = await conn.fetchval("SELECT COALESCE(SUM(views),0) FROM groups")
-        return {
-            "total": total, "groups": groups, "channels": channels,
-            "users": users, "views": views,
-        }

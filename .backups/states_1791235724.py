@@ -11,7 +11,6 @@ class AddItemStates(StatesGroup):
     language = State()
     members = State()
     tags = State()
-    photo = State()
     adult = State()
     confirm = State()
 

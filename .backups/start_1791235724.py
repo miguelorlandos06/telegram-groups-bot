@@ -2,10 +2,8 @@ from aiogram import Router, F
 from aiogram.filters import CommandStart, Command
 from aiogram.types import Message, CallbackQuery
 
-from bot import db, config
-from bot.keyboards import (
-    main_menu, categories_kb, my_publications_kb, confirm_delete_kb
-)
+from bot import db
+from bot.keyboards import main_menu, categories_kb
 
 router = Router()
 SEP = "━━━━━━━━━━━━━━━━━━━━"
@@ -21,6 +19,7 @@ def _icon_for(g):
 @router.message(CommandStart())
 async def cmd_start(message: Message):
     await db.upsert_user(message.from_user.id, message.from_user.username)
+
     text = (
         f"╔════════════════════════╗\n"
         f"   🤖 DIRECTORIO TELEGRAM\n"
@@ -77,10 +76,6 @@ async def cb_browse(call: CallbackQuery):
     await show_browse(call, cat, page=0)
 
 
-# ============================================
-# MIS PUBLICACIONES
-# ============================================
-
 @router.message(Command("misgrupos"))
 async def cmd_mine(message: Message):
     await _show_mine(message.from_user.id, message)
@@ -93,11 +88,10 @@ async def cb_mine(call: CallbackQuery):
 
 async def _show_mine(user_id, message, edit=False, call=None):
     groups = await db.my_groups(user_id)
-
     if not groups:
         text = (
-            f"😕 <b>Aún no has publicado nada</b>\n\n"
-            f"Pulsa ➕ en el menú para añadir tu primer grupo o canal."
+            "😕 <b>Aún no has publicado nada</b>\n\n"
+            "Pulsa ➕ en el menú para añadir tu primer grupo o canal."
         )
         if edit:
             await message.edit_text(text, reply_markup=main_menu(), parse_mode="HTML")
@@ -110,8 +104,7 @@ async def _show_mine(user_id, message, edit=False, call=None):
         f"╔════════════════════════╗\n"
         f"   ⭐ TUS PUBLICACIONES\n"
         f"╚════════════════════════╝\n\n"
-        f"📊 <b>Total:</b> {len(groups)}\n"
-        f"<i>Pulsa el botón 🗑️ para eliminar una publicación.</i>\n\n"
+        f"📊 <b>Total:</b> {len(groups)}\n\n"
         f"{SEP}\n\n"
     )
     body = ""
@@ -119,71 +112,19 @@ async def _show_mine(user_id, message, edit=False, call=None):
         icon = _icon_for(g)
         flag = ""
         if g["country"]:
+            from bot import config
             label = config.COUNTRIES.get(g["country"], "")
             flag = label.split()[0] if label else ""
         body += f"{icon} <a href='{g['link']}'><b>{g['title']}</b></a> {flag}\n"
     text = header + body.rstrip() + f"\n\n{SEP}"
 
-    kb = my_publications_kb(groups)
     if edit:
         await message.edit_text(text, disable_web_page_preview=True,
-                                 reply_markup=kb, parse_mode="HTML")
+                                 reply_markup=main_menu(), parse_mode="HTML")
         await call.answer()
     else:
-        await message.answer(text, disable_web_page_preview=True,
-                              reply_markup=kb, parse_mode="HTML")
+        await message.answer(text, disable_web_page_preview=True, parse_mode="HTML")
 
-
-# ============================================
-# ELIMINAR
-# ============================================
-
-@router.callback_query(F.data.startswith("del:"))
-async def cb_delete(call: CallbackQuery):
-    group_id = int(call.data.split(":")[1])
-    group = await db.get_group_by_id(group_id)
-
-    if not group:
-        await call.answer("❌ No encontrada", show_alert=True)
-        return
-    if group["owner_id"] != call.from_user.id:
-        await call.answer("❌ No es tu publicación", show_alert=True)
-        return
-
-    icon = _icon_for(group)
-    text = (
-        f"🗑️ <b>¿Eliminar esta publicación?</b>\n\n"
-        f"{icon} <b>{group['title']}</b>\n"
-        f"🔗 {group['link']}\n\n"
-        f"<i>Esta acción no se puede deshacer.</i>"
-    )
-    await call.message.edit_text(
-        text, reply_markup=confirm_delete_kb(group_id),
-        disable_web_page_preview=True, parse_mode="HTML"
-    )
-    await call.answer()
-
-
-@router.callback_query(F.data.startswith("del_no:"))
-async def cb_delete_cancel(call: CallbackQuery):
-    await call.answer("❌ Cancelado")
-    await _show_mine(call.from_user.id, call.message, edit=True, call=call)
-
-
-@router.callback_query(F.data.startswith("del_yes:"))
-async def cb_delete_confirm(call: CallbackQuery):
-    group_id = int(call.data.split(":")[1])
-    ok = await db.delete_group(group_id, call.from_user.id)
-    if not ok:
-        await call.answer("❌ No se pudo eliminar", show_alert=True)
-        return
-    await call.answer("✅ Eliminada")
-    await _show_mine(call.from_user.id, call.message, edit=True, call=call)
-
-
-# ============================================
-# COMANDOS EXTRA
-# ============================================
 
 @router.message(Command("todos"))
 async def cmd_all(message: Message):
@@ -200,11 +141,11 @@ async def cmd_all(message: Message):
 @router.message(Command("tendencias"))
 async def cmd_trending(message: Message):
     from bot.keyboards import trending_kb
+    from bot import config
     user = await db.get_user(message.from_user.id)
     show_adult = bool(user and user["show_nsfw"])
     filters = {} if show_adult else {"is_adult": False}
     groups = await db.get_top_groups(limit=10, filters=filters)
-
     if not groups:
         await message.answer("🔥 <b>No hay publicaciones todavía.</b>",
                               reply_markup=main_menu(), parse_mode="HTML")

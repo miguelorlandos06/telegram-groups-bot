@@ -22,10 +22,14 @@ async def cb_trending(call: CallbackQuery):
     filters = {} if show_adult else {"is_adult": False}
     groups = await db.get_top_groups(limit=10, filters=filters)
     if not groups:
-        await call.message.edit_text("🔥 <b>No hay publicaciones todavía.</b>",
-                                      reply_markup=main_menu(), parse_mode="HTML")
+        await call.message.edit_text(
+            "🔥 <b>No hay publicaciones todavía.</b>",
+            reply_markup=main_menu(),
+            parse_mode="HTML"
+        )
         await call.answer()
         return
+
     text = (
         f"╔════════════════════════╗\n"
         f"   🔥 TOP 10 TENDENCIAS\n"
@@ -41,6 +45,11 @@ async def cb_trending(call: CallbackQuery):
         text += f"<b>{i}.</b> {icon} <a href='{g['link']}'>{g['title']}</a> {flag}\n"
         text += f"   <i>👁️ {g['views']} vistas</i>\n\n"
     text = text.rstrip() + f"\n\n{SEP}"
-    await call.message.edit_text(text, reply_markup=trending_kb(groups),
-                                  disable_web_page_preview=True, parse_mode="HTML")
+
+    await call.message.edit_text(
+        text,
+        reply_markup=trending_kb(groups),
+        disable_web_page_preview=True,
+        parse_mode="HTML"
+    )
     await call.answer()

@@ -1,3 +1,7 @@
+/* ============================================
+   DIRECTORIO - ESTILO MINIMALISTA
+   ============================================ */
+
 :root {
   --bg: #ffffff;
   --bg-soft: #fafafa;
@@ -56,6 +60,8 @@ body {
   transition: background var(--t), color var(--t);
 }
 
+/* ============ HEADER ============ */
+
 .header {
   position: sticky;
   top: 0;
@@ -96,6 +102,8 @@ body {
   color: var(--text);
 }
 
+/* ============ SEARCH ============ */
+
 .search {
   position: relative;
   display: flex;
@@ -105,6 +113,10 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   transition: all var(--t);
+}
+
+[data-theme="dark"] .search {
+  background: var(--bg-soft);
 }
 
 .search:focus-within {
@@ -155,6 +167,8 @@ body {
 .search__clear:active {
   background: var(--bg-hover);
 }
+
+/* ============ TABS ============ */
 
 .tabs {
   display: flex;
@@ -209,6 +223,8 @@ body {
   color: white;
 }
 
+/* ============ STATUS ============ */
+
 .status {
   padding: 0 20px 12px;
   font-size: 12px;
@@ -217,11 +233,15 @@ body {
   letter-spacing: 0.02em;
 }
 
+/* ============ LIST ============ */
+
 .list {
   display: flex;
   flex-direction: column;
   padding: 0 20px;
 }
+
+/* ============ CARD ============ */
 
 .card {
   display: flex;
@@ -231,7 +251,6 @@ body {
   border-bottom: 1px solid var(--border);
   transition: opacity var(--t);
   animation: fadeIn 0.25s ease backwards;
-  position: relative;
 }
 
 .card:last-child { border-bottom: none; }
@@ -244,8 +263,8 @@ body {
 .card:active { opacity: 0.6; }
 
 .card__icon {
-  width: 44px;
-  height: 44px;
+  width: 36px;
+  height: 36px;
   flex-shrink: 0;
   border-radius: var(--radius-sm);
   background: var(--bg-soft);
@@ -262,18 +281,8 @@ body {
 }
 
 .card__icon svg {
-  width: 18px;
-  height: 18px;
-}
-
-.card__avatar {
-  width: 44px;
-  height: 44px;
-  flex-shrink: 0;
-  border-radius: var(--radius-sm);
-  object-fit: cover;
-  background: var(--bg-soft);
-  border: 1px solid var(--border);
+  width: 16px;
+  height: 16px;
 }
 
 .card__body {
@@ -357,15 +366,7 @@ body {
   color: var(--text);
 }
 
-.card__action--delete {
-  color: var(--danger);
-  border-color: rgba(220, 38, 38, 0.3);
-  margin-left: 6px;
-}
-
-.card__action--delete:active {
-  background: rgba(220, 38, 38, 0.1);
-}
+/* ============ SKELETON ============ */
 
 .skeleton {
   display: flex;
@@ -393,6 +394,8 @@ body {
   100% { transform: translateX(100%); }
 }
 
+/* ============ EMPTY ============ */
+
 .empty {
   display: flex;
   flex-direction: column;
@@ -412,6 +415,8 @@ body {
   font-size: 14px;
 }
 
+/* ============ SPINNER ============ */
+
 .spinner {
   width: 20px;
   height: 20px;
@@ -425,6 +430,8 @@ body {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* ============ SHEET ============ */
 
 .sheet {
   position: fixed;
@@ -525,6 +532,8 @@ body {
   background-repeat: no-repeat;
 }
 
+/* ============ TOAST ============ */
+
 .toast {
   position: fixed;
   bottom: calc(20px + var(--safe-bottom));
@@ -544,6 +553,8 @@ body {
   from { opacity: 0; transform: translate(-50%, 8px); }
   to { opacity: 1; transform: translate(-50%, 0); }
 }
+
+/* ============ UTILS ============ */
 
 .hidden { display: none !important; }
 

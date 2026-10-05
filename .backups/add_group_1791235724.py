@@ -17,6 +17,7 @@ async def cmd_add(message: Message, state: FSMContext):
     await db.upsert_user(message.from_user.id, message.from_user.username)
     await state.clear()
     await state.set_state(AddItemStates.choosing_type)
+
     text = (
         f"╔════════════════════════╗\n"
         f"   ➕ NUEVA PUBLICACIÓN\n"
@@ -62,15 +63,20 @@ async def step_link(message: Message, state: FSMContext):
     if link.startswith("@"):
         link = f"https://t.me/{link[1:]}"
     if not link.startswith("https://t.me/"):
-        await message.answer("❌ <b>Enlace inválido.</b>", parse_mode="HTML")
+        await message.answer("❌ <b>Enlace inválido.</b> Usa https://t.me/xxx o @xxx",
+                              parse_mode="HTML")
         return
     if await db.group_exists(link):
-        await message.answer("❌ <b>Ya está registrado.</b>", parse_mode="HTML")
+        await message.answer("❌ <b>Esa publicación ya está registrada.</b>",
+                              parse_mode="HTML")
         return
     await state.update_data(link=link)
     await state.set_state(AddItemStates.title)
-    await message.answer("✏️ <b>Título</b>\n\nEnvíame el título (3-60 caracteres).",
-                          parse_mode="HTML")
+    text = (
+        f"✏️ <b>Título</b>\n\n"
+        f"Envíame el título (3-60 caracteres)."
+    )
+    await message.answer(text, parse_mode="HTML")
 
 
 @router.message(AddItemStates.title)
@@ -81,8 +87,12 @@ async def step_title(message: Message, state: FSMContext):
         return
     await state.update_data(title=title)
     await state.set_state(AddItemStates.description)
-    await message.answer("📝 <b>Descripción</b>\n\nHasta 300 caracteres.",
-                          parse_mode="HTML")
+    text = (
+        f"📝 <b>Descripción</b>\n\n"
+        f"Envíame una descripción (hasta 300 caracteres).\n"
+        f"<i>Explica de qué trata tu grupo o canal.</i>"
+    )
+    await message.answer(text, parse_mode="HTML")
 
 
 @router.message(AddItemStates.description)
@@ -93,8 +103,11 @@ async def step_desc(message: Message, state: FSMContext):
         return
     await state.update_data(description=desc)
     await state.set_state(AddItemStates.category)
-    await message.answer("📂 <b>Categoría</b>\n\nElige la categoría:",
-                          reply_markup=categories_kb("pick_cat"), parse_mode="HTML")
+    text = (
+        f"📂 <b>Categoría</b>\n\n"
+        f"Elige la categoría:"
+    )
+    await message.answer(text, reply_markup=categories_kb("pick_cat"), parse_mode="HTML")
 
 
 @router.callback_query(AddItemStates.category, F.data.startswith("pick_cat:"))
@@ -102,8 +115,12 @@ async def step_cat(call: CallbackQuery, state: FSMContext):
     cat = call.data.split(":")[1]
     await state.update_data(category=cat)
     await state.set_state(AddItemStates.country)
-    await call.message.edit_text("🌍 <b>País</b>\n\n¿De qué país es?",
-                                  reply_markup=countries_kb("pick_country"), parse_mode="HTML")
+    text = (
+        f"🌍 <b>País</b>\n\n"
+        f"¿De qué país es?"
+    )
+    await call.message.edit_text(text, reply_markup=countries_kb("pick_country"),
+                                  parse_mode="HTML")
     await call.answer()
 
 
@@ -113,8 +130,12 @@ async def step_country(call: CallbackQuery, state: FSMContext):
     country = None if val == "skip" else val
     await state.update_data(country=country)
     await state.set_state(AddItemStates.language)
-    await call.message.edit_text("🗣️ <b>Idioma principal</b>",
-                                  reply_markup=languages_kb("pick_lang"), parse_mode="HTML")
+    text = (
+        f"🗣️ <b>Idioma principal</b>\n\n"
+        f"Elige el idioma:"
+    )
+    await call.message.edit_text(text, reply_markup=languages_kb("pick_lang"),
+                                  parse_mode="HTML")
     await call.answer()
 
 
@@ -124,8 +145,12 @@ async def step_lang(call: CallbackQuery, state: FSMContext):
     lang = None if val == "skip" else val
     await state.update_data(language=lang)
     await state.set_state(AddItemStates.members)
-    await call.message.edit_text("👥 <b>Tamaño</b>\n\n¿Cuántos miembros aprox.?",
-                                  reply_markup=members_kb("pick_members"), parse_mode="HTML")
+    text = (
+        f"👥 <b>Tamaño</b>\n\n"
+        f"¿Cuántos miembros aprox.?"
+    )
+    await call.message.edit_text(text, reply_markup=members_kb("pick_members"),
+                                  parse_mode="HTML")
     await call.answer()
 
 
@@ -152,13 +177,12 @@ async def step_members(call: CallbackQuery, state: FSMContext):
 @router.message(AddItemStates.tags, Command("skip"))
 async def step_tags_skip(message: Message, state: FSMContext):
     await state.update_data(tags=None)
-    await state.set_state(AddItemStates.photo)
+    await state.set_state(AddItemStates.adult)
     text = (
-        f"📸 <b>Foto de perfil</b>\n\n"
-        f"Envíame una <b>foto</b> para la ficha.\n"
-        f"O escribe /skip para omitir."
+        f"🔞 <b>Contenido +18</b>\n\n"
+        f"¿Es contenido para adultos?"
     )
-    await message.answer(text, parse_mode="HTML")
+    await message.answer(text, reply_markup=adult_kb(), parse_mode="HTML")
 
 
 @router.message(AddItemStates.tags)
@@ -168,35 +192,12 @@ async def step_tags(message: Message, state: FSMContext):
         await message.answer("❌ Máximo 100 caracteres.", parse_mode="HTML")
         return
     await state.update_data(tags=tags)
-    await state.set_state(AddItemStates.photo)
+    await state.set_state(AddItemStates.adult)
     text = (
-        f"📸 <b>Foto de perfil</b>\n\n"
-        f"Envíame una <b>foto</b> para la ficha.\n"
-        f"O escribe /skip para omitir."
+        f"🔞 <b>Contenido +18</b>\n\n"
+        f"¿Es contenido para adultos?"
     )
-    await message.answer(text, parse_mode="HTML")
-
-
-@router.message(AddItemStates.photo, Command("skip"))
-async def step_photo_skip(message: Message, state: FSMContext):
-    await state.update_data(photo_url=None)
-    await state.set_state(AddItemStates.adult)
-    text = "🔞 <b>Contenido +18</b>\n\n¿Es contenido para adultos?"
     await message.answer(text, reply_markup=adult_kb(), parse_mode="HTML")
-
-
-@router.message(AddItemStates.photo, F.photo)
-async def step_photo(message: Message, state: FSMContext):
-    photo = message.photo[-1]
-    await state.update_data(photo_url=photo.file_id)
-    await state.set_state(AddItemStates.adult)
-    text = "🔞 <b>Contenido +18</b>\n\n¿Es contenido para adultos?"
-    await message.answer(text, reply_markup=adult_kb(), parse_mode="HTML")
-
-
-@router.message(AddItemStates.photo)
-async def step_photo_invalid(message: Message, state: FSMContext):
-    await message.answer("📸 Envíame una <b>foto</b> o pulsa /skip.", parse_mode="HTML")
 
 
 @router.callback_query(AddItemStates.adult, F.data.startswith("adult:"))
@@ -237,7 +238,7 @@ async def step_confirm(call: CallbackQuery, state: FSMContext):
         f"{icon} <b>{data['title']}</b>\n"
         f"🔗 {data['link']}\n"
         f"🆔 <code>#{group_id}</code>\n\n"
-        f"Tu {label.lower()} ya está en el directorio."
+        f"Tu {label.lower()} ya está disponible en el directorio. 🎉"
     )
     await call.message.edit_text(text, reply_markup=main_menu(),
                                   disable_web_page_preview=True, parse_mode="HTML")
@@ -254,7 +255,6 @@ def _format_preview(data):
     cat = config.CATEGORIES.get(data.get("category"), "—")
     members = config.MEMBERS_RANGES.get(data.get("members_range"), "—") if data.get("members_range") else "—"
     tags = data.get("tags") or "—"
-    foto = "Sí" if data.get("photo_url") else "No"
 
     return (
         f"╔════════════════════════╗\n"
@@ -269,7 +269,6 @@ def _format_preview(data):
         f"🗣️ {lang}\n"
         f"👥 {members}\n"
         f"🏷️ {tags}\n"
-        f"📸 Foto: {foto}\n"
         f"🔗 {data['link']}\n\n"
         f"{SEP}\n\n"
         f"¿Todo correcto?"

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<title>Directorio</title>
+<link rel="stylesheet" href="/app/style.css">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+
+<header class="header">
+  <h1 class="header__title">Directorio</h1>
+  <button class="icon-btn" id="themeToggle" aria-label="Tema">
+    <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+    </svg>
+  </button>
+</header>
+
+<div class="search">
+  <svg class="search__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="11" cy="11" r="8"/>
+    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+  </svg>
+  <input type="text" id="searchInput" placeholder="Buscar" autocomplete="off" spellcheck="false">
+  <button class="search__clear" id="searchClear" aria-label="Limpiar">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18"/>
+      <line x1="6" y1="6" x2="18" y2="18"/>
+    </svg>
+  </button>
+</div>
+
+<nav class="tabs">
+  <button class="tab" data-filter="type">
+    <span id="tab-type">Todos</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="6 9 12 15 18 9"/>
+    </svg>
+  </button>
+  <button class="tab" data-filter="country">
+    <span id="tab-country">País</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="6 9 12 15 18 9"/>
+    </svg>
+  </button>
+  <button class="tab" data-filter="category">
+    <span id="tab-category">Categoría</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="6 9 12 15 18 9"/>
+    </svg>
+  </button>
+  <button class="tab tab--toggle" data-toggle="adult">
+    <span>+18</span>
+  </button>
+</nav>
+
+<div class="status" id="status"></div>
+
+<main class="list" id="list"></main>
+
+<div class="skeleton hidden" id="skeleton">
+  <div class="skeleton__row"></div>
+  <div class="skeleton__row"></div>
+  <div class="skeleton__row"></div>
+  <div class="skeleton__row"></div>
+</div>
+
+<div class="empty hidden" id="empty">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="11" cy="11" r="8"/>
+    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    <line x1="8" y1="11" x2="14" y2="11"/>
+  </svg>
+  <p>Sin resultados</p>
+</div>
+
+<div id="sentinel"></div>
+<div class="spinner hidden" id="spinner"></div>
+
+<div class="sheet hidden" id="sheet">
+  <div class="sheet__backdrop" id="sheetBackdrop"></div>
+  <div class="sheet__panel">
+    <div class="sheet__header">
+      <h2 id="sheetTitle">Filtrar</h2>
+      <button class="icon-btn" id="sheetClose" aria-label="Cerrar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="sheet__body" id="sheetBody"></div>
+  </div>
+</div>
+
+<div class="toast hidden" id="toast"></div>
+
+<script src="/app/app.js"></script>
+</body>
+</html>
