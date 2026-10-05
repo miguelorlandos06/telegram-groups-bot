@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: telegram-groups-bot
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m bot.main
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
