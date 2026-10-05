@@ -1,5 +1,5 @@
 // ============================================
-// DIRECTORIO TELEGRAM - MINI APP
+// DIRECTORIO - MINI APP MINIMALISTA
 // ============================================
 
 const tg = window.Telegram?.WebApp;
@@ -8,42 +8,29 @@ const haptic = tg?.HapticFeedback;
 if (tg) {
   tg.ready();
   tg.expand();
-  tg.setHeaderColor('#0a0e1a');
-  tg.setBackgroundColor('#0a0e1a');
   tg.disableVerticalSwipes?.();
 }
 
 // ---------- ESTADO ----------
 const state = {
-  q: '',
-  type: '',
-  country: '',
-  category: '',
-  members_range: '',
-  adult: false,
-  page: 0,
-  per_page: 10,
-  total: 0,
-  loading: false,
-  hasMore: true,
+  q: '', type: '', country: '', category: '',
+  adult: false, page: 0, per_page: 10, total: 0,
+  loading: false, hasMore: true,
   seenIds: new Set(),
 };
 
 let meta = null;
 let searchTimeout = null;
-let currentFilter = null;
 
-// ---------- ICONOS SVG REUTILIZABLES ----------
+// ---------- ICONOS SVG (trazo fino) ----------
 const ICON = {
-  group: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
-  channel: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>',
-  lock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
-  globe: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
-  users: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>',
-  folder: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>',
-  arrow: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>',
-  share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>',
-  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+  group: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+  channel: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>',
+  lock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
+  globe: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
+  users: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>',
+  folder: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>',
+  arrow: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>',
 };
 
 // ---------- HELPERS ----------
@@ -54,23 +41,15 @@ function escapeHtml(s) {
 }
 
 function vibrate(style = 'light') {
-  try {
-    haptic?.impactOccurred(style);
-  } catch (e) {}
+  try { haptic?.impactOccurred(style); } catch (e) {}
 }
 
-function notify(type = 'success') {
-  try {
-    haptic?.notificationOccurred(type);
-  } catch (e) {}
-}
-
-function toast(msg, duration = 1800) {
+function toast(msg, ms = 1600) {
   const el = document.getElementById('toast');
   el.textContent = msg;
   el.classList.remove('hidden');
   clearTimeout(el._t);
-  el._t = setTimeout(() => el.classList.add('hidden'), duration);
+  el._t = setTimeout(() => el.classList.add('hidden'), ms);
 }
 
 // ---------- TEMA ----------
@@ -82,7 +61,7 @@ function setupTheme() {
 
   document.getElementById('themeToggle').addEventListener('click', () => {
     vibrate('light');
-    const curr = document.documentElement.getAttribute('data-theme');
+    const curr = document.documentElement.getAttribute('data-theme') || 'light';
     const next = curr === 'dark' ? 'light' : 'dark';
     applyTheme(next);
     localStorage.setItem('theme', next);
@@ -94,12 +73,12 @@ function applyTheme(theme) {
   const icon = document.getElementById('themeIcon');
   if (theme === 'dark') {
     icon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
-    tg?.setHeaderColor('#0a0e1a');
-    tg?.setBackgroundColor('#0a0e1a');
+    tg?.setHeaderColor('#0a0a0a');
+    tg?.setBackgroundColor('#0a0a0a');
   } else {
-    icon.innerHTML = '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
-    tg?.setHeaderColor('#f8fafc');
-    tg?.setBackgroundColor('#f8fafc');
+    icon.innerHTML = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>';
+    tg?.setHeaderColor('#ffffff');
+    tg?.setBackgroundColor('#ffffff');
   }
 }
 
@@ -114,7 +93,7 @@ function setupSearch() {
     searchTimeout = setTimeout(() => {
       state.q = e.target.value.trim();
       resetAndLoad();
-    }, 300);
+    }, 280);
   });
 
   clear.addEventListener('click', () => {
@@ -126,31 +105,29 @@ function setupSearch() {
   });
 }
 
-// ---------- FILTROS (CHIPS) ----------
-function setupChips() {
-  document.querySelectorAll('.chip').forEach(chip => {
-    chip.addEventListener('click', () => {
+// ---------- TABS / FILTROS ----------
+function setupTabs() {
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
       vibrate('light');
-      if (chip.dataset.toggle === 'adult') {
+      if (tab.dataset.toggle === 'adult') {
         state.adult = !state.adult;
-        chip.classList.toggle('active', state.adult);
+        tab.classList.toggle('active', state.adult);
         resetAndLoad();
         return;
       }
-      openSheet(chip.dataset.filter);
+      openSheet(tab.dataset.filter);
     });
   });
 }
 
 function openSheet(filter) {
   if (!meta) return;
-
   const sheet = document.getElementById('sheet');
   const title = document.getElementById('sheetTitle');
   const body = document.getElementById('sheetBody');
 
-  let opts = {};
-  let current = '';
+  let opts = {}, current = '';
 
   if (filter === 'type') {
     opts = { '': 'Todos', 'group': 'Grupos', 'channel': 'Canales' };
@@ -161,19 +138,9 @@ function openSheet(filter) {
   } else if (filter === 'category') {
     opts = { '': 'Todas', ...meta.categories };
     current = state.category;
-  } else if (filter === 'members_range') {
-    opts = { '': 'Todos', ...meta.members_ranges };
-    current = state.members_range;
   }
 
-  const labels = {
-    type: 'Tipo',
-    country: 'País',
-    category: 'Categoría',
-    members_range: 'Miembros',
-  };
-  title.textContent = labels[filter] || 'Filtrar';
-  currentFilter = filter;
+  title.textContent = { type: 'Tipo', country: 'País', category: 'Categoría' }[filter] || 'Filtrar';
 
   body.innerHTML = '';
   Object.entries(opts).forEach(([key, label]) => {
@@ -184,7 +151,7 @@ function openSheet(filter) {
       vibrate('light');
       state[filter] = key;
       state.page = 0;
-      updateChip(filter, key, label);
+      updateTab(filter, key, label);
       closeSheet();
       resetAndLoad();
     });
@@ -194,16 +161,16 @@ function openSheet(filter) {
   sheet.classList.remove('hidden');
 }
 
-function updateChip(filter, key, label) {
-  const chip = document.querySelector(`.chip[data-filter="${filter}"]`);
-  const span = document.getElementById(`chip-${filter}`);
-  const defaults = { type: 'Tipo', country: 'País', category: 'Categoría', members_range: 'Miembros' };
+function updateTab(filter, key, label) {
+  const tab = document.querySelector(`.tab[data-filter="${filter}"]`);
+  const span = document.getElementById(`tab-${filter}`);
+  const defaults = { type: 'Todos', country: 'País', category: 'Categoría' };
   if (key === '') {
     span.textContent = defaults[filter];
-    chip.classList.remove('active');
+    tab.classList.remove('active');
   } else {
     span.textContent = label;
-    chip.classList.add('active');
+    tab.classList.add('active');
   }
 }
 
@@ -232,15 +199,15 @@ async function loadGroups(reset = false) {
   const list = document.getElementById('list');
   const skeleton = document.getElementById('skeleton');
   const empty = document.getElementById('empty');
-  const loadMore = document.getElementById('loadMore');
-  const countInfo = document.getElementById('countInfo');
+  const spinner = document.getElementById('spinner');
+  const status = document.getElementById('status');
 
   if (reset) {
     skeleton.classList.remove('hidden');
     empty.classList.add('hidden');
     list.innerHTML = '';
   } else {
-    loadMore.classList.remove('hidden');
+    spinner.classList.remove('hidden');
   }
 
   const params = new URLSearchParams({
@@ -248,7 +215,6 @@ async function loadGroups(reset = false) {
     type: state.type,
     country: state.country,
     category: state.category,
-    members_range: state.members_range,
     show_adult: state.adult ? '1' : '0',
     page: state.page.toString(),
   });
@@ -258,88 +224,62 @@ async function loadGroups(reset = false) {
     const data = await res.json();
 
     skeleton.classList.add('hidden');
-    loadMore.classList.add('hidden');
+    spinner.classList.add('hidden');
 
     state.total = data.total;
 
     if (data.items.length === 0 && state.page === 0) {
       empty.classList.remove('hidden');
-      countInfo.textContent = 'Sin resultados';
+      status.textContent = '';
       return;
     }
 
-    countInfo.textContent = `${data.total} resultados`;
+    status.textContent = `${data.total} ${data.total === 1 ? 'resultado' : 'resultados'}`;
 
     data.items.forEach((item, idx) => {
       if (state.seenIds.has(item.id)) return;
       state.seenIds.add(item.id);
-      const card = renderCard(item, idx);
-      list.appendChild(card);
+      list.appendChild(renderCard(item, idx));
     });
 
     state.hasMore = data.items.length === state.per_page;
-    if (!state.hasMore && state.page > 0) {
-      countInfo.textContent = `${data.total} resultados · fin`;
-    }
   } catch (e) {
     console.error(e);
     skeleton.classList.add('hidden');
-    loadMore.classList.add('hidden');
+    spinner.classList.add('hidden');
     toast('Error al cargar');
   } finally {
     state.loading = false;
   }
 }
 
-// ---------- RENDER CARD ----------
+// ---------- RENDER ----------
 function renderCard(g, idx) {
   const el = document.createElement('article');
   const isChannel = g.type === 'channel';
   el.className = 'card' + (g.is_adult ? ' card--adult' : '');
-  el.style.animationDelay = `${Math.min(idx * 30, 300)}ms`;
+  el.style.animationDelay = `${Math.min(idx * 20, 200)}ms`;
 
   const iconSvg = g.is_adult ? ICON.lock : (isChannel ? ICON.channel : ICON.group);
 
-  const tags = [];
-  if (isChannel) tags.push(`<span class="tag tag--channel">${ICON.channel} Canal</span>`);
-  else tags.push(`<span class="tag">${ICON.group} Grupo</span>`);
-  if (g.country_label) tags.push(`<span class="tag">${ICON.globe} ${escapeHtml(g.country_label)}</span>`);
-  if (g.category_label) tags.push(`<span class="tag">${ICON.folder} ${escapeHtml(g.category_label)}</span>`);
-  if (g.members_label) tags.push(`<span class="tag">${ICON.users} ${escapeHtml(g.members_label)}</span>`);
-  if (g.is_adult) tags.push(`<span class="tag tag--adult">+18</span>`);
+  const meta = [];
+  if (isChannel) meta.push(`<span class="card__meta-item">${ICON.channel} Canal</span>`);
+  else meta.push(`<span class="card__meta-item">${ICON.group} Grupo</span>`);
+  if (g.country_label) meta.push(`<span class="card__meta-item">${ICON.globe} ${escapeHtml(g.country_label)}</span>`);
+  if (g.members_label) meta.push(`<span class="card__meta-item">${ICON.users} ${escapeHtml(g.members_label)}</span>`);
+  if (g.is_adult) meta.push(`<span class="card__meta-item card__meta-item--adult">+18</span>`);
 
   el.innerHTML = `
-    <div class="card__header">
-      <div class="card__icon">${iconSvg}</div>
-      <div class="card__title-wrap">
-        <span class="card__title">${escapeHtml(g.title)}</span>
-        <div class="card__subtitle">${ICON.users} ${escapeHtml(g.members_label || 'Sin datos')}</div>
-      </div>
+    <div class="card__icon">${iconSvg}</div>
+    <div class="card__body">
+      <a class="card__title" href="${escapeHtml(g.link)}" target="_blank" rel="noopener">${escapeHtml(g.title)}</a>
+      <div class="card__meta">${meta.join('')}</div>
+      ${g.description ? `<p class="card__desc">${escapeHtml(g.description)}</p>` : ''}
     </div>
-    ${g.description ? `<p class="card__desc">${escapeHtml(g.description)}</p>` : ''}
-    <div class="card__tags">${tags.join('')}</div>
-    <div class="card__actions">
-      <a class="btn" href="${escapeHtml(g.link)}" target="_blank" rel="noopener">
-        Abrir en Telegram ${ICON.arrow}
-      </a>
-      <button class="btn btn--ghost" data-share="${escapeHtml(g.link)}" data-title="${escapeHtml(g.title)}" aria-label="Compartir">
-        ${ICON.share}
-      </button>
-    </div>
+    <a class="card__action" href="${escapeHtml(g.link)}" target="_blank" rel="noopener" aria-label="Abrir">
+      ${ICON.arrow}
+    </a>
   `;
-
-  el.querySelector('[data-share]').addEventListener('click', (e) => {
-    e.stopPropagation();
-    vibrate('medium');
-    const link = e.currentTarget.dataset.share;
-    const title = e.currentTarget.dataset.title;
-    const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(title)}`;
-    if (tg) {
-      tg.openTelegramLink(shareUrl);
-    } else {
-      window.open(shareUrl, '_blank');
-    }
-  });
 
   return el;
 }
@@ -352,7 +292,7 @@ function setupInfiniteScroll() {
       state.page++;
       loadGroups(false);
     }
-  }, { rootMargin: '200px' });
+  }, { rootMargin: '300px' });
   io.observe(sentinel);
 }
 
@@ -367,7 +307,7 @@ async function init() {
 
   setupTheme();
   setupSearch();
-  setupChips();
+  setupTabs();
   setupSheet();
   setupInfiniteScroll();
   loadGroups(true);
