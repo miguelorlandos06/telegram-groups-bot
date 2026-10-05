@@ -3,11 +3,11 @@
 # ============================================
 
 BOT_TOKEN = "8979504390:AAHTLwyDC9LCDFGPEiQcI-GJBQRTiK7tWsw"
-WEBHOOK_URL = "https://telegram-groups-bot.onrender.com"
+WEBHOOK_URL = "https://telegram-groups-repo.onrender.com"
 WEBHOOK_PATH = "/webhook"
 WEBHOOK_SECRET = "cambia_esto_123"
 PORT = 10000
-DATABASE_URL = ""
+DATABASE_URL = "postgresql://telegram_bot_tmd5_user:VjExw6x3rv2k5dG7VFd5a4s2l8NfiYxo@dpg-db1rfpnavr4c73d8mfn0-a.oregon-postgres.render.com/telegram_bot_tmd5"
 ADMIN_ID = 8282703640
 
 CATEGORIES = {
