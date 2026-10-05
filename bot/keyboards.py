@@ -1,4 +1,4 @@
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from bot import config
 
@@ -13,6 +13,10 @@ def _icon_for(g):
 def main_menu():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🔍 Buscar", callback_data="menu:search")],
+        [InlineKeyboardButton(
+            text="🌐 Abrir App",
+            web_app=WebAppInfo(url=f"{config.WEBHOOK_URL}/app")
+        )],
         [InlineKeyboardButton(text="👥 Grupos", callback_data="menu:all:group"),
          InlineKeyboardButton(text="📢 Canales", callback_data="menu:all:channel")],
         [InlineKeyboardButton(text="📚 Todos", callback_data="menu:all:all")],
