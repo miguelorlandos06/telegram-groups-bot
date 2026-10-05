@@ -2,7 +2,7 @@
 # CONFIGURACIÓN - EDITA AQUÍ
 # ============================================
 
-BOT_TOKEN = "TU_TOKEN_AQUI"
+BOT_TOKEN = "8979504390:AAHTLwyDC9LCDFGPEiQcI-GJBQRTiK7tWsw"
 WEBHOOK_URL = "https://TU-APP.onrender.com"
 WEBHOOK_PATH = "/webhook"
 WEBHOOK_SECRET = "cambia_esto_123"
